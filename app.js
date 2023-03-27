@@ -21,7 +21,8 @@ genToken = (user) => {
       iat: new Date().getTime(),
       exp: new Date().setDate(new Date().getDate() + 1),
     },
-    process.env.SECRET
+    process.env.SECRET,
+    { expiresIn: "1d" }
   );
 };
 
@@ -109,6 +110,29 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   (req, res, next) => {
     res.json("Secret Data");
+  }
+);
+
+app.post(
+  "/updateUser",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res) {
+    try {
+      const { name, email, interests, followers } = req.body;
+      const user = await User.findOne({ email: email });
+      if (user) {
+        user.name = name;
+        user.interests = interests;
+        user.followers = followers;
+        await user.save();
+        const token = genToken(user);
+        res
+          .status(200)
+          .json({ token, user: user, message: "User details updated" });
+      }
+    } catch (err) {
+      console.log("Error: ", err);
+    }
   }
 );
 
