@@ -29,6 +29,26 @@ const UserSchema = new mongoose.Schema({
     type: Array,
     required: false,
   },
+  about: {
+    type: String,
+    required: false,
+  },
+  highestEducation: {
+    type: String,
+    required: false,
+  },
+  occupation: {
+    type: String,
+    required: false,
+  },
+  socials: {
+    type: Object,
+    required: false,
+  },
+  profilePicture: {
+    type: String,
+    required: false,
+  },
 });
 
 UserSchema.methods.encryptPassword = async (password) => {

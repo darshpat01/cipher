@@ -21,8 +21,7 @@ genToken = (user) => {
       iat: new Date().getTime(),
       exp: new Date().setDate(new Date().getDate() + 1),
     },
-    process.env.SECRET,
-    { expiresIn: "1d" }
+    process.env.SECRET
   );
 };
 
@@ -43,6 +42,20 @@ db.once("open", () => {
 });
 
 // ROUTES
+app.post(
+  "/getUserDetails",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res) {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email });
+    if (user) {
+      res.status(200).json({ user: user });
+    } else {
+      console.log("User not found");
+      res.status(404).json({ user: user });
+    }
+  }
+);
 
 app.post("/register", async function (req, res) {
   const { name, email, password } = req.body;
@@ -105,30 +118,48 @@ app.post("/changePassword", async function (req, res) {
   }
 });
 
-app.get(
-  "/secret",
-  passport.authenticate("jwt", { session: false }),
-  (req, res, next) => {
-    res.json("Secret Data");
-  }
-);
-
-app.post(
+app.patch(
   "/updateUser",
   passport.authenticate("jwt", { session: false }),
   async function (req, res) {
+    const {
+      email,
+      about,
+      profilePic,
+      socials,
+      interests,
+      highestEducation,
+      occupation,
+    } = req.body;
+    const user = await User.findOne({ email: email });
+    if (user) {
+      if (about) user.about = about;
+      if (profilePic) user.profilePic = profilePic;
+      if (socials) user.socials = socials;
+      if (interests) user.interests = interests;
+      if (highestEducation) user.highestEducation = highestEducation;
+      if (occupation) user.occupation = occupation;
+
+      await user.save();
+      res.status(200).json({ user: user });
+    } else {
+      console.log("User not found");
+      res.status(404).json({ user: user });
+    }
+  }
+);
+
+// get all followers
+app.get(
+  "/getFollowers",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res) {
     try {
-      const { name, email, interests, followers } = req.body;
-      const user = await User.findOne({ email: email });
+      const { email } = req.body;
+      const user = User.findOne({ email: email });
       if (user) {
-        user.name = name;
-        user.interests = interests;
-        user.followers = followers;
-        await user.save();
-        const token = genToken(user);
-        res
-          .status(200)
-          .json({ token, user: user, message: "User details updated" });
+        const followers = user.followers;
+        res.status(200).json({ followers: followers });
       }
     } catch (err) {
       console.log("Error: ", err);
