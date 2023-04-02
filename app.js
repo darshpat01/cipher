@@ -42,6 +42,11 @@ db.once("open", () => {
 });
 
 // ROUTES
+
+app.get("/", function (req, res) {
+  res.send("Health Check");
+});
+
 app.post(
   "/getUserDetails",
   passport.authenticate("jwt", { session: false }),
